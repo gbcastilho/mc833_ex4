@@ -9,58 +9,56 @@
 #include <time.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include "net_api.h"
 
 #define LISTENQ 10
 #define MAXDATASIZE 100
 
 int main(int argc, char **argv)
 {
+  // TODO: check entry arguments
+  if (argc != 2)
+  {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+    exit(1);
+  }
+
+  int port = atoi(argv[1]);
+
+  pid_t pid;
   int listenfd, connfd;
   struct sockaddr_in servaddr;
   char buf[MAXDATASIZE];
   time_t ticks;
 
-  if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-  {
-    perror("socket");
-    exit(1);
-  }
+  listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
   bzero(&servaddr, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  printf("PORT:\n");
-  int port = rand() % 10000 + 1025;
-  printf("%d\n", port);
-
   servaddr.sin_port = htons(port);
 
-  if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)
-  {
-    perror("bind");
-    exit(1);
-  }
+  Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-  if (listen(listenfd, LISTENQ) == -1)
-  {
-    perror("listen");
-    exit(1);
-  }
+  Listen(listenfd, LISTENQ);
 
   for (;;)
   {
-    if ((connfd = accept(listenfd, (struct sockaddr *)NULL, NULL)) == -1)
+    connfd = Accept(listenfd, (struct sockaddr *)NULL, NULL);
+
+    if ((pid = Fork()) == 0)
     {
-      perror("accept");
-      exit(1);
+      Close(listenfd);
+      // TODO; implementar a lógica do servidor
+      ticks = time(NULL);
+      snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\n", ctime(&ticks));
+      write(connfd, buf, strlen(buf));
+
+      Close(connfd);
+      exit(0);
     }
 
-    ticks = time(NULL);
-    snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\n", ctime(&ticks));
-    write(connfd, buf, strlen(buf));
-
-    close(connfd);
+    Close(connfd);
   }
   return (0);
 }
