@@ -12,7 +12,6 @@
 #include "net_api.h"
 
 #define LISTENQ 10
-#define MAXDATASIZE 100
 
 int main(int argc, char **argv)
 {
@@ -26,10 +25,9 @@ int main(int argc, char **argv)
   int port = atoi(argv[1]);
 
   pid_t pid;
-  int listenfd, connfd;
+  int listenfd, connfd, n;
   struct sockaddr_in servaddr;
-  char buf[MAXDATASIZE];
-  time_t ticks;
+  char buf[MAXDATASIZE], recvline[MAXLINE + 1];
 
   listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -50,11 +48,24 @@ int main(int argc, char **argv)
     {
       Close(listenfd);
       // TODO; implementar a lógica do servidor
-      ticks = time(NULL);
-      snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\n", ctime(&ticks));
+      snprintf(buf, sizeof(buf), "TAREFA: LIMPEZA\n");
       write(connfd, buf, strlen(buf));
 
+      sleep(5);
       Close(connfd);
+
+    
+      while ((n = read(connfd, recvline, MAXLINE)) > 0)
+      {
+        printf("%d\n", n);
+        recvline[n] = 0;
+        if (fputs(recvline, stdout) == EOF)
+        {
+          perror("fputs error");
+          exit(1);
+        }
+      }
+
       exit(0);
     }
 

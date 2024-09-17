@@ -83,3 +83,27 @@ pid_t Fork(void)
 
   return (pid);
 }
+
+void PrintSocketInfo(int sockfd, int local) {
+  struct sockaddr_in addr;
+  socklen_t addrlen = sizeof(addr);
+
+  if (local == 1) {
+    if (getsockname(sockfd, (struct sockaddr *)&addr, &addrlen) == -1) {
+        perror("getsockname");
+        exit(1);
+    }
+  }
+  else {
+    if (getpeername(sockfd, (struct sockaddr *)&addr, &addrlen) == -1) {
+        perror("getsockname");
+        exit(1);
+    }
+  }
+
+  char ipstr[INET_ADDRSTRLEN];
+  inet_ntop(AF_INET, &(addr.sin_addr), ipstr, sizeof(ipstr));
+  
+  printf("Endereço IP: %s\n", ipstr);
+  printf("Porta: %d\n", ntohs(addr.sin_port));
+}

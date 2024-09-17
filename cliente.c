@@ -11,13 +11,11 @@
 #include <unistd.h>
 #include "net_api.h"
 
-#define MAXLINE 4096
-
 int main(int argc, char **argv)
 {
   int sockfd, n;
   char recvline[MAXLINE + 1];
-  char error[MAXLINE + 1];
+  char error[MAXLINE + 1], buf[MAXDATASIZE];;
   struct sockaddr_in servaddr;
 
   if (argc != 3)
@@ -38,9 +36,12 @@ int main(int argc, char **argv)
 
   Inet_pton(AF_INET, ip, &servaddr.sin_addr);
 
-  getsockname(sockfd, (struct sockaddr *)&servaddr, (socklen_t *)sizeof(servaddr));
-
   Connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+
+  printf("Local:\n");
+  PrintSocketInfo(sockfd, 1);
+  printf("Servidor:\n");
+  PrintSocketInfo(sockfd, 0);
 
   while ((n = read(sockfd, recvline, MAXLINE)) > 0)
   {
@@ -57,6 +58,13 @@ int main(int argc, char **argv)
     perror("read error");
     exit(1);
   }
+
+  Connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+
+  snprintf(buf, sizeof(buf), "TAREFA_LIMPEZA CONCLUÍDA");
+  write(sockfd, buf, strlen(buf));
+
+  Close(sockfd);
 
   exit(0);
 }

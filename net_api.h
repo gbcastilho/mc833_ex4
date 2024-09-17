@@ -11,6 +11,9 @@
 #include <arpa/inet.h>
 #include <inttypes.h>
 
+#define MAXDATASIZE 100
+#define MAXLINE 4096
+
 void Close(int fd);
 
 int Socket(int family, int type, int flags);
@@ -26,3 +29,5 @@ void Inet_pton(int family, const char *src, void *dst);
 void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 pid_t Fork(void);
+
+void PrintSocketInfo(int sockfd, int local);
