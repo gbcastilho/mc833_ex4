@@ -53,20 +53,29 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
   return (connfd);
 }
 
-void Inet_pton(int family, const char *src, void *dst)
-{
-  if (inet_pton(family, src, dst) <= 0)
-  {
-    perror("inet_pton");
-    exit(1);
-  }
-}
-
 void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
   if (connect(sockfd, addr, addrlen) < 0)
   {
     perror("connect");
+    exit(1);
+  }
+}
+
+void Send(int sockfd, const void *buf, size_t len, int flags)
+{
+  if (send(sockfd, buf, len, flags) < 0) 
+  {
+    perror("send");
+    exit(1);
+  }
+}
+
+void Recv(int fd, void *buf, size_t len, int flags)
+{
+  if (recv(fd, buf, len, flags) < 0)
+  {
+    perror("recv");
     exit(1);
   }
 }
@@ -84,21 +93,36 @@ pid_t Fork(void)
   return (pid);
 }
 
-void PrintSocketInfo(int sockfd, int local) {
+void Getsockname(int sockfd, struct sockaddr *__restrict__ addr, socklen_t *__restrict__ len)
+{
+  if (getsockname(sockfd, addr, len) == -1)
+    {
+        perror("getsockname");
+        exit(1);
+    }
+}
+
+void Getpeername(int sockfd, struct sockaddr *__restrict__ addr, socklen_t *__restrict__ len)
+{
+  if (getpeername(sockfd, addr, len) == -1)
+    {
+        perror("getpeername");
+        exit(1);
+    }
+}
+
+void PrintSocketInfo(int sockfd, int local)
+{
   struct sockaddr_in addr;
   socklen_t addrlen = sizeof(addr);
 
-  if (local == 1) {
-    if (getsockname(sockfd, (struct sockaddr *)&addr, &addrlen) == -1) {
-        perror("getsockname");
-        exit(1);
-    }
+  if (local == 1)
+  {
+    Getsockname(sockfd, (struct sockaddr *)&addr, &addrlen);
   }
-  else {
-    if (getpeername(sockfd, (struct sockaddr *)&addr, &addrlen) == -1) {
-        perror("getsockname");
-        exit(1);
-    }
+  else
+  {
+    Getpeername(sockfd, (struct sockaddr *)&addr, &addrlen);
   }
 
   char ipstr[INET_ADDRSTRLEN];

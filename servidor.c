@@ -9,13 +9,16 @@
 #include <time.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "net_api.h"
+#include "server.h"
 
 #define LISTENQ 10
 
 int main(int argc, char **argv)
 {
-  // TODO: check entry arguments
+  // verifica se a porta do servidor foi passada como parametro
   if (argc != 2)
   {
     fprintf(stderr, "Usage: %s <port>\n", argv[0]);
@@ -24,10 +27,8 @@ int main(int argc, char **argv)
 
   int port = atoi(argv[1]);
 
-  pid_t pid;
-  int listenfd, connfd, n;
+  int listenfd, connfd;
   struct sockaddr_in servaddr;
-  char buf[MAXDATASIZE], recvline[MAXLINE + 1];
 
   listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -44,27 +45,36 @@ int main(int argc, char **argv)
   {
     connfd = Accept(listenfd, (struct sockaddr *)NULL, NULL);
 
+    pid_t pid;
     if ((pid = Fork()) == 0)
     {
       Close(listenfd);
-      // TODO; implementar a lógica do servidor
-      snprintf(buf, sizeof(buf), "TAREFA: LIMPEZA\n");
-      write(connfd, buf, strlen(buf));
-
-      sleep(5);
-      Close(connfd);
-
-    
-      while ((n = read(connfd, recvline, MAXLINE)) > 0)
-      {
-        printf("%d\n", n);
-        recvline[n] = 0;
-        if (fputs(recvline, stdout) == EOF)
-        {
-          perror("fputs error");
-          exit(1);
-        }
+      // abre o arquivo que sera registrados os logs do gerenciados
+      int fd = open("server_logs.txt", O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+      if (fd == -1) {
+        perror("open");
+        exit(1);
       }
+
+      // obtem o IP e a porta do servidor de processamento conectado
+      struct sockaddr_in addr;
+      socklen_t addrlen = sizeof(addr);
+      Getpeername(connfd, (struct sockaddr *)&addr, &addrlen);
+      char ipstr[INET_ADDRSTRLEN];
+      inet_ntop(AF_INET, &(addr.sin_addr), ipstr, sizeof(ipstr));
+
+      SendReq(connfd, fd, "TAREFA: LIMPEZA", ipstr, ntohs(addr.sin_port));
+      ReceiveRes(connfd, fd, ipstr, ntohs(addr.sin_port));
+
+      // descomentar as linhas caso queira mandar mais de uma tarefa para o servidor de processamento
+      // SendReq(connfd, fd, "TAREFA: LIMPEZA", ipstr, ntohs(addr.sin_port));
+      // ReceiveRes(connfd, fd, ipstr, ntohs(addr.sin_port));
+
+      SendReq(connfd, fd, "ENCERRAR", ipstr, ntohs(addr.sin_port));
+
+      Close(fd);
+
+      Close(connfd);
 
       exit(0);
     }

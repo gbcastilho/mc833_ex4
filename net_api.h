@@ -24,10 +24,16 @@ void Listen(int sockfd, int backlog);
 
 int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
-void Inet_pton(int family, const char *src, void *dst);
-
 void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
+void Send(int sockfd, const void *buf, size_t len, int flags);
+
+void Recv(int fd, void *buf, size_t len, int flags);
+
 pid_t Fork(void);
+
+void Getsockname(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __len);
+
+void Getpeername(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __len);
 
 void PrintSocketInfo(int sockfd, int local);
